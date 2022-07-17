@@ -1,0 +1,73 @@
+version: "3.8"
+
+services:
+  localstack:
+    container_name: "localstack_main"
+    image: localstack/localstack
+    ports:
+      - "127.0.0.1:4566:4566" # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559" # external services port range
+      - "127.0.0.1:53:53" # DNS config (only required for Pro)
+      - "127.0.0.1:53:53/udp" # DNS config (only required for Pro)
+      - "127.0.0.1:443:443" # LocalStack HTTPS Gateway (only required for Pro)
+    environment:
+      - DEBUG=1
+      - PERSISTENCE=1
+      - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR-}
+      - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY-} # only required for Pro
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    networks:
+      - localstack
+      - backend
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    
+  couchdb:
+    image: couchdb
+    container_name: couchdb_local
+    networks:
+      - localstack
+      - backend
+    restart: always
+    ports:
+      - "5984:5984"
+      - "4369:4369"
+      - "9100:9100"
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=password 
+      - COUCHDB_PASS=password
+      - WAIT_HOSTS=couchdb:5984
+      - COUCHDB_PORT=5984
+      - COUCHDB_ADMIN_INTERFACE=http://localhost:5984/_utils/#
+      - COUCHDB_CONNECTION=http://localhost:5984
+      - COUCHDB_PROTOCOL=http
+      - COUCHDB_HOST=localhost
+    volumes:
+      - bitnami:/bitnami/couchdb
+    
+  api:
+    container_name: "backend"
+    build: .
+    depends_on:
+      - couchdb
+      - localstack
+    networks:
+      - backend
+      - localstack
+    ports:
+      - "8080:80"
+      - "4010:4010"
+    volumes:
+      - ./:/usr/src/app
+
+
+networks:
+  backend:
+  localstack:
+
+
+volumes:
+  bitnami:
+    driver: local

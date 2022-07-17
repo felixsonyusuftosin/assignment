@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+      "module": "commonjs",
+      "target": "es6",
+      "baseUrl": ".",
+      "allowSyntheticDefaultImports": false,
+      "paths": {
+        "@src/*": ["./src/*"],
+        "@root": ["src/app.js"],
+        "@router/*": ["src/router/"],
+        "@middleware/*": ["src/middleware/"],
+        "@utils/*": ["src/utils"],
+        "@database/*": ["src/database"],
+        "@repos/*": ["src/repos"],
+        "@views/*":["src/services"]
+      }
+    },
+    "exclude": ["node_modules"]
+  }
